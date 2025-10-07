@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "easeon-ss-quickmend",
+	"version": "${version}",
+	"name": "EaseonSS - QuickMend",
+	"description": "Right-click anvils to instantly repair Mending items with XP.",
+	"authors": [
+		"Teron"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/easeon/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.easeon.ss.quickmend.Easeon"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.17.2",
+		"minecraft": "~1.21.9",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
