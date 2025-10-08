@@ -7,7 +7,7 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-    archivesName = "easeon.ss.quickmend.teron.fabric-${project.minecraft_version}"
+    archivesName = "easeon.ss.quickmend.teron.fabric"
 }
 
 repositories {
@@ -22,9 +22,8 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"template-mod" {
+		"easeon.ss.quickmend" {
 			sourceSet sourceSets.main
-			sourceSet sourceSets.client
 		}
 	}
 
