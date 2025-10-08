@@ -33,13 +33,18 @@ public class QuickMendHandler {
             return ActionResult.PASS;
         }
 
-        if (world.isClient()) {
-            return ActionResult.SUCCESS;
-        }
+        // 크리에이티브 모드 체크
+        boolean isCreative = player.isCreative();
 
         int totalExperience = getTotalExperience(player);
-        if (totalExperience <= 0) {
-            return ActionResult.FAIL;
+
+        // 경험치가 없고 크리에이티브도 아니면 기본 모루 GUI 열기
+        if (!isCreative && totalExperience <= 0) {
+            return ActionResult.PASS;
+        }
+
+        if (world.isClient()) {
+            return ActionResult.SUCCESS;
         }
 
         int currentDamage = stack.getDamage();
@@ -47,13 +52,16 @@ public class QuickMendHandler {
         int repairAmount;
 
         if (player.isSneaking()) {
-            repairAmount = Math.min(totalExperience * 2, currentDamage);
+            // 크리에이티브면 전체 수리, 아니면 경험치만큼
+            repairAmount = isCreative ? currentDamage : Math.min(totalExperience * 2, currentDamage);
         } else {
             int tenPercentRepair = maxDurability / 10;
             repairAmount = Math.min(tenPercentRepair, currentDamage);
 
-            int maxRepairFromExp = totalExperience * 2;
-            repairAmount = Math.min(repairAmount, maxRepairFromExp);
+            if (!isCreative) {
+                int maxRepairFromExp = totalExperience * 2;
+                repairAmount = Math.min(repairAmount, maxRepairFromExp);
+            }
         }
 
         if (repairAmount <= 0) {
@@ -63,8 +71,16 @@ public class QuickMendHandler {
         int expToConsume = (repairAmount + 1) / 2;
 
         stack.setDamage(currentDamage - repairAmount);
-        removeExperience(player, expToConsume);
-        damageAnvil(world, pos, state);
+
+        // 크리에이티브가 아닐 때만 경험치 소모
+        if (!isCreative) {
+            removeExperience(player, expToConsume);
+        }
+
+        // 크리에이티브가 아닐 때만 모루 내구도 소모
+        if (!isCreative) {
+            damageAnvil(world, pos, state);
+        }
 
         world.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS,
