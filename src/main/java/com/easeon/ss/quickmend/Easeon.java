@@ -24,9 +24,7 @@ public class Easeon implements ModInitializer {
             LOGGER.info("Commands registered!");
         });
 
-        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER) {
-            UseBlockCallback.EVENT.register(QuickMendHandler::onBlockUse);
-        }
+        UseBlockCallback.EVENT.register(QuickMendHandler::onBlockUse);
 
         LOGGER.info("QuickMend Mod Initialized!");
     }
