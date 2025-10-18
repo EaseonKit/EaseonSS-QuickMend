@@ -7,7 +7,7 @@
 	"authors": [
 		"Teron"
 	],
-	"license": "CC0-1.0",
+    "license": "All Rights Reserved",
 	"icon": "assets/easeon/icon.png",
 	"environment": "*",
 	"entrypoints": {
