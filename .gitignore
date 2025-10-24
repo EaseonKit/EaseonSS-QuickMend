@@ -12,6 +12,8 @@ classes/
 # idea
 
 .idea/
+!.idea/dictionaries/
+!.idea/dictionaries/**
 *.iml
 *.ipr
 *.iws

@@ -3,19 +3,19 @@ plugins {
 	id 'maven-publish'
 }
 
-version = project.mod_version
+version = "${project.mod_version}+${project.supported_minecraft}"
 group = project.maven_group
 
+def package_name = project.mod_name.toLowerCase();
+
 base {
-    archivesName = "easeon.ss.quickmend.teron.fabric"
+	archivesName = "easeon.ss.${package_name}.teron.fabric"
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	flatDir {
+		dirs "../EaseonSS-Core/build/libs"
+	}
 }
 
 loom {
@@ -35,16 +35,25 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	
+	// EaseonSS - Core
+	modImplementation name: "easeon.ss.core.teron.fabric-${project.easeon_ss_core_version}"
 }
 
 processResources {
+	duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
 	inputs.property "version", project.version
+	inputs.property "mod_name", project.mod_name
+	inputs.property "mod_package", package_name
+	inputs.property "mod_description", project.mod_description
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand(
+			"version": project.version,
+			"mod_name": project.mod_name,
+			"mod_package": package_name,
+			"mod_description": project.mod_description
+		)
 	}
 }
 
@@ -53,11 +62,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
 }

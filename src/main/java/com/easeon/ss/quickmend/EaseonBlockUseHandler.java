@@ -1,5 +1,6 @@
 package com.easeon.ss.quickmend;
 
+import com.easeon.ss.core.util.system.EaseonLogger;
 import net.minecraft.block.AnvilBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -14,10 +15,10 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class QuickMendHandler {
-    public static ActionResult onBlockUse(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
-        if (!Easeon.CONFIG.isEnabled()) return ActionResult.PASS;
+public class EaseonBlockUseHandler {
+    private static EaseonLogger logger = EaseonLogger.of();
 
+    public static ActionResult onBlockUse(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
         BlockPos pos = hitResult.getBlockPos();
         BlockState state = world.getBlockState(pos);
 
