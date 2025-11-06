@@ -1,13 +1,11 @@
 package com.easeon.ss.quickmend;
 
-import com.easeon.ss.core.game.EaseonSound;
-import com.easeon.ss.core.helper.BlockHelper;
-import com.easeon.ss.core.helper.PlayerHelper;
 import com.easeon.ss.core.util.system.EaseonLogger;
+import com.easeon.ss.core.wrapper.EaseonPlayer;
+import com.easeon.ss.core.wrapper.EaseonWorld;
 import net.minecraft.block.AnvilBlock;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
@@ -18,21 +16,21 @@ import net.minecraft.world.World;
 public class EaseonBlockUseHandler {
     private static final EaseonLogger logger = EaseonLogger.of();
 
-    public static ActionResult onBlockUse(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
+    public static ActionResult onBlockUse(ServerPlayerEntity playerEntity, World mcWorld, Hand hand, BlockHitResult hitResult) {
+        var player = new EaseonPlayer(playerEntity);
+        var world = new EaseonWorld(mcWorld);
         var pos = hitResult.getBlockPos();
-        var state = world.getBlockState(pos);
+        var anvil = world.getBlockState(pos);
 
-        if (BlockHelper.not(state, AnvilBlock.class)) {
+        if (anvil.not(AnvilBlock.class))
             return ActionResult.PASS;
-        }
 
-        var stack = player.getStackInHand(hand);
+        var handItem = player.getStackInHand(hand);
 
-        if (stack.isEmpty() ||
-            !stack.isDamaged() ||
-            !stack.hasEnchantments() ||
-            EnchantmentHelper.getEnchantments(stack).getEnchantments().stream().noneMatch(entry -> entry.matchesKey(Enchantments.MENDING))
-        ) {
+        if (handItem.isEmpty() ||
+            !handItem.isDamaged() ||
+            !handItem.hasEnchant(Enchantments.MENDING))
+        {
             return ActionResult.PASS;
         }
 
@@ -40,22 +38,16 @@ public class EaseonBlockUseHandler {
             return ActionResult.SUCCESS;
         }
 
-        int currentDamage = stack.getDamage();
-        int maxDurability = stack.getMaxDamage();
-        int repairAmount;
-
-        if (player.isSneaking()) {
-            // 쉬프트 상태면 전체 수리
-            repairAmount = currentDamage;
-        } else {
-            // 10% 수리
-            repairAmount = Math.min(maxDurability / 10, currentDamage);
-        }
+        int currentDamage = handItem.getDamage();
+        int maxDurability = handItem.getMaxDamage();
+        int repairAmount = player.isSneaking()
+            ? currentDamage
+            : Math.min(maxDurability / 10, currentDamage);
 
         if (!player.isCreative()) {
-            int totalExperience = PlayerHelper.getTotalExperience(player);
+            int totalExperience = player.getTotalExperience();
             if (totalExperience <= 0) {
-                return ActionResult.FAIL;
+                return ActionResult.PASS;
             }
 
             // 경험치 제한 반영
@@ -67,12 +59,12 @@ public class EaseonBlockUseHandler {
             }
 
             int expToConsume = (repairAmount + 1) / 2;
-            PlayerHelper.removeExperience(player, expToConsume);
-            BlockHelper.damageAnvil(world, pos, state);
+            player.addXP(-expToConsume);
+            anvil.damageAnvil(world, pos);
         }
 
-        stack.setDamage(currentDamage - repairAmount);
-        EaseonSound.playAll(world, player, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS);
+        handItem.setDamage(currentDamage - repairAmount);
+        world.playSound(player, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS);
 
         return ActionResult.SUCCESS;
     }
