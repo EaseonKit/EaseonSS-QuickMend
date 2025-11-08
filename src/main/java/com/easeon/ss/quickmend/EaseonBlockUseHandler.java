@@ -64,7 +64,7 @@ public class EaseonBlockUseHandler {
         }
 
         handItem.setDamage(currentDamage - repairAmount);
-        world.playSound(player, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS);
+        world.playSound(player.getPos(), SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS, 1.0f);
 
         return ActionResult.SUCCESS;
     }
