@@ -15,55 +15,39 @@ import net.minecraft.world.World;
 
 public class EaseonBlockUseHandler {
     private static final EaseonLogger logger = EaseonLogger.of();
+    private static final int REPAIR_RATE_PERCENT = 10;
+    private static final int XP_TO_DURABILITY_RATIO = 2;
 
-    public static ActionResult onBlockUse(ServerPlayerEntity playerEntity, World mcWorld, Hand hand, BlockHitResult hitResult) {
-        var player = new EaseonPlayer(playerEntity);
+    public static ActionResult onBlockUse(ServerPlayerEntity mcPlayer, World mcWorld, Hand hand, BlockHitResult hitResult) {
         var world = new EaseonWorld(mcWorld);
         var pos = hitResult.getBlockPos();
         var anvil = world.getBlockState(pos);
 
-        if (anvil.not(AnvilBlock.class))
+        if (anvil.not(AnvilBlock.class) || world.isClient())
             return ActionResult.PASS;
 
+        var player = new EaseonPlayer(mcPlayer);
         var handItem = player.getStackInHand(hand);
-
-        if (handItem.isEmpty() ||
-            !handItem.isDamaged() ||
-            !handItem.hasEnchant(Enchantments.MENDING))
-        {
+        int damage = handItem.getDamage();
+        if (damage <= 0 || !handItem.hasEnchant(Enchantments.MENDING))
             return ActionResult.PASS;
-        }
 
-        if (world.isClient()) {
-            return ActionResult.SUCCESS;
-        }
-
-        int currentDamage = handItem.getDamage();
-        int maxDurability = handItem.getMaxDamage();
         int repairAmount = player.isSneaking()
-            ? currentDamage
-            : Math.min(maxDurability / 10, currentDamage);
+            ? damage
+            : Math.min(handItem.getMaxDamage() / REPAIR_RATE_PERCENT, damage);
 
-        if (!player.isCreative()) {
-            int totalExperience = player.getTotalExperience();
-            if (totalExperience <= 0) {
+        if (player.isSurvival()) {
+            int xp = player.getTotalExperience();
+            if (xp <= 0)
                 return ActionResult.PASS;
-            }
 
             // 경험치 제한 반영
-            int maxRepairFromExp = totalExperience * 2;
-            repairAmount = Math.min(repairAmount, maxRepairFromExp);
-
-            if (repairAmount <= 0) {
-                return ActionResult.FAIL;
-            }
-
-            int expToConsume = (repairAmount + 1) / 2;
+            repairAmount = Math.min(repairAmount, xp * XP_TO_DURABILITY_RATIO);
+            int expToConsume = (repairAmount + 1) / XP_TO_DURABILITY_RATIO;
             player.addXP(-expToConsume);
             anvil.damageAnvil(world, pos);
         }
-
-        handItem.setDamage(currentDamage - repairAmount);
+        handItem.setDamage(damage - repairAmount);
         world.playSound(player.getPos(), SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS, 1.0f);
 
         return ActionResult.SUCCESS;
