@@ -4,28 +4,28 @@ import com.easeon.ss.core.util.system.EaseonLogger;
 import com.easeon.ss.core.wrapper.EaseonBlockHit;
 import com.easeon.ss.core.wrapper.EaseonPlayer;
 import com.easeon.ss.core.wrapper.EaseonWorld;
-import net.minecraft.block.AnvilBlock;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.AnvilBlock;
 
 public class EaseonBlockUseHandler {
     private static final EaseonLogger logger = EaseonLogger.of();
     private static final int REPAIR_RATE_PERCENT = 10;
     private static final int XP_TO_DURABILITY_RATIO = 2;
 
-    public static ActionResult onBlockUse(EaseonWorld world, EaseonPlayer player, Hand hand, EaseonBlockHit hit) {
+    public static InteractionResult onBlockUse(EaseonWorld world, EaseonPlayer player, InteractionHand hand, EaseonBlockHit hit) {
         final var pos = hit.getBlockPos();
         final var anvil = world.getBlockState(pos);
         if (anvil.not(AnvilBlock.class) || world.isClient())
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
 
         final var tool = player.getStackInHand(hand);
         final int damage = tool.getDamage();
         if (damage <= 0 || !tool.hasEnchant(Enchantments.MENDING))
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
 
         int repairAmount = player.isSneaking()
             ? damage
@@ -34,7 +34,7 @@ public class EaseonBlockUseHandler {
         if (player.isSurvival()) {
             final int xp = player.getTotalExperience();
             if (xp <= 0)
-                return ActionResult.PASS;
+                return InteractionResult.PASS;
 
             // 경험치 제한 반영
             repairAmount = Math.min(repairAmount, xp * XP_TO_DURABILITY_RATIO);
@@ -43,8 +43,8 @@ public class EaseonBlockUseHandler {
             anvil.damageAnvil(world, pos);
         }
         tool.repair(repairAmount);
-        world.playSound(player.getPos(), SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS, 1.0f);
+        world.playSound(player.getPos(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 1.0f);
 
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 }
